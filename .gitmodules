@@ -1,0 +1,3 @@
+[submodule "External/DPSmallUtils"]
+	path = External/DPSmallUtils
+	url = git://github.com/dnpp73/DPSmallUtils.git
