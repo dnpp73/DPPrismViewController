@@ -41,3 +41,9 @@
 - (void)rotateViewCounterclockwiseWithAnimated:(BOOL)animated;
 
 @end
+
+
+@interface UIViewController (DPPrismViewControllerRotation)
+- (void)rotateViewControllerClockwiseWithAnimated:(BOOL)animated;
+- (void)rotateViewControllerCounterclockwiseWithAnimated:(BOOL)animated;
+@end

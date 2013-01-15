@@ -11,6 +11,7 @@
 #import "DPPrismViewControllerUtils.h"
 #import "DPRenderViewHelper.h"
 #import <QuartzCore/QuartzCore.h>
+#import "DPProcessingTime.h"
 
 
 #define DEFAULT_DURATION 0.6

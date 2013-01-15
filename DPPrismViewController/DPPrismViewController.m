@@ -157,7 +157,10 @@
     // 引数チェック
     for (id object in viewControllers) {
         if ([object isKindOfClass:[UIViewController class]] == NO) {
-            ShowConsole(@"_viewControllers の中に UIViewController のサブクラスでないものが含まれている。");
+            ShowConsole(@"viewControllers の中に UIViewController のサブクラスでないものが含まれている。");
+            return;
+        } else if ([object isKindOfClass:[self class]]) {
+            ShowConsole(@"DPPrismViewController の派生を入れてネストするとおかしくなる。");
             return;
         }
     }
@@ -291,6 +294,9 @@
     // 引数チェック
     if (viewController == nil) {
         ShowConsole(@"nil なものは放り込めない。");
+        return;
+    } else if ([viewController isKindOfClass:[self class]]) {
+        ShowConsole(@"DPPrismViewController の派生を入れてネストするとおかしくなる。");
         return;
     }
     
@@ -570,6 +576,37 @@
             _delayRotateScreenBlock = nil;
         }
     }
+}
+
+@end
+
+
+@implementation UIViewController (DPPrismViewControllerRotation)
+
+- (void)rotateViewControllerClockwiseWithAnimated:(BOOL)animated
+{
+    if ([self.parentViewController isKindOfClass:[DPPrismViewController class]] == NO) {
+        ShowConsole(@"parentViewController が DPPrismViewController ではない。");
+        return;
+    } else if ([(DPPrismViewController*)self.parentViewController visibleViewController] != self) {
+        ShowConsole(@"visibleViewController ではない。");
+        return;
+    }
+    
+    [(DPPrismViewController*)self.parentViewController rotateViewClockwiseWithAnimated:animated];
+}
+
+- (void)rotateViewControllerCounterclockwiseWithAnimated:(BOOL)animated
+{
+    if ([self.parentViewController isKindOfClass:[DPPrismViewController class]] == NO) {
+        ShowConsole(@"parentViewController が DPPrismViewController ではない。");
+        return;
+    } else if ([(DPPrismViewController*)self.parentViewController visibleViewController] != self) {
+        ShowConsole(@"visibleViewController ではない。");
+        return;
+    }
+    
+    [(DPPrismViewController*)self.parentViewController rotateViewCounterclockwiseWithAnimated:animated];
 }
 
 @end
