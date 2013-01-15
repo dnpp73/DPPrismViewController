@@ -15,6 +15,7 @@
 
 
 #define DEFAULT_DURATION 0.6
+#define RENDER_VIEW 1
 
 
 static BOOL _performTransitioning = NO;
@@ -221,17 +222,6 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     layersView.layer.sublayerTransform = _mainView.layer.sublayerTransform;
     [_mainView addSubview:layersView];
     
-    void (^completion)(BOOL) = ^(BOOL finished){ // この段階で completion として呼ぶものを纏めておけば後でネスト出来るので
-        [_mainView removeFromSuperview];
-        _performTransitioning = NO;
-        if ([self.delegate respondsToSelector:@selector(prismTransitionDidStopTransition:)]) {
-            [self.delegate prismTransitionDidStopTransition:self];
-        }
-        if (_completion) {
-            _completion(finished);
-        }
-    };
-    
     BOOL clockwiseMove = (_type == DPPrismTransitionTypeClockwise);
     
     float angle = (2 * M_PI)/(float)_sides;
@@ -243,6 +233,20 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     CAGradientLayer* frontShadowLayer;
     CAGradientLayer* rightSideShadowLayer;
     CAGradientLayer* leftSideShadowLayer;
+    
+    void (^completion)(BOOL) = ^(BOOL finished){ // この段階で completion として呼ぶものを纏めておけば後でネスト出来るので
+        [_mainView removeFromSuperview];
+        [frontShadowLayer removeFromSuperlayer];
+        [rightSideShadowLayer removeFromSuperlayer];
+        [leftSideShadowLayer removeFromSuperlayer];
+        _performTransitioning = NO;
+        if ([self.delegate respondsToSelector:@selector(prismTransitionDidStopTransition:)]) {
+            [self.delegate prismTransitionDidStopTransition:self];
+        }
+        if (_completion) {
+            _completion(finished);
+        }
+    };
     
     { // アニメーションの下準備
         [CATransaction begin];
@@ -261,9 +265,11 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
             return shadowLayer;
         };
         
+        #if RENDER_VIEW
         UIImage* frontImage     = [DPRenderViewHelper renderImageFromView:_frontView];
         UIImage* rightSideImage = [DPRenderViewHelper renderImageFromView:_rightSideView];
         UIImage* leftSideImage  = [DPRenderViewHelper renderImageFromView:_leftSideView];
+        #endif
         
         { // mainLayer
             mainLayer = layersView.layer;
@@ -274,16 +280,24 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         }
         
         { // frontLayer
+            #if RENDER_VIEW
             frontLayer = [CALayer layer];
             frontLayer.bounds = CGRectMake(0, 0, frontImage.size.width, frontImage.size.height);
             frontLayer.anchorPoint = CGPointMake((clockwiseMove?1.0:0.0), 0.5);
-            frontLayer.position = CGPointMake((clockwiseMove?frontLayer.bounds.size.width:0.0), (frontLayer.bounds.size.height / 2.0));
             frontLayer.contents = (id)[frontImage CGImage];
+            #else
+            frontLayer = _frontView.layer;
+            frontLayer.bounds = CGRectMake(0, 0, _frontView.bounds.size.width, _frontView.bounds.size.height);
+            frontLayer.anchorPoint = CGPointMake((clockwiseMove?1.0:0.0), 0.5);
+            #endif
+            frontLayer.position = CGPointMake((clockwiseMove?frontLayer.bounds.size.width:0.0), (frontLayer.bounds.size.height / 2.0));
             {
                 CGFloat op = 1.0;
                 frontLayer.opacity = op;
             }
+            #if RENDER_VIEW
             [mainLayer addSublayer:frontLayer];
+            #endif
         }
         
         { // frontShadowLayer
@@ -294,17 +308,25 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         }
         
         { // rightSideLayer
+            #if RENDER_VIEW
             rightSideLayer = [CALayer layer];
             rightSideLayer.bounds = CGRectMake(0, 0, rightSideImage.size.width, rightSideImage.size.height);
             rightSideLayer.anchorPoint = CGPointMake(0.0, 0.5);
+            rightSideLayer.contents = (id)[rightSideImage CGImage];
+            #else
+            rightSideLayer = _rightSideView.layer;
+            rightSideLayer.bounds = CGRectMake(0, 0, _rightSideView.bounds.size.width, _rightSideView.bounds.size.height);
+            rightSideLayer.anchorPoint = CGPointMake(0.0, 0.5);
+            #endif
             rightSideLayer.position = CGPointMake((rightSideLayer.bounds.size.width), (rightSideLayer.bounds.size.height / 2.0));
             rightSideLayer.transform = CATransform3DMakeRotation(angle, 0.0, 1.0, 0.0);
-            rightSideLayer.contents = (id)[rightSideImage CGImage];
             {
                 CGFloat op = (clockwiseMove)?1.0:0.0;
                 rightSideLayer.opacity = op;
             }
+            #if RENDER_VIEW
             [mainLayer addSublayer:rightSideLayer];
+            #endif
         }
         
         { // rightSideShadowLayer
@@ -315,17 +337,25 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         }
         
         { // leftSideLayer
+            #if RENDER_VIEW
             leftSideLayer = [CALayer layer];
             leftSideLayer.bounds = CGRectMake(0, 0, leftSideImage.size.width, leftSideImage.size.height);
             leftSideLayer.anchorPoint = CGPointMake(1.0, 0.5);
+            leftSideLayer.contents = (id)[leftSideImage CGImage];
+            #else
+            leftSideLayer = _leftSideView.layer;
+            leftSideLayer.bounds = CGRectMake(0, 0, _leftSideView.bounds.size.width, _leftSideView.bounds.size.height);
+            leftSideLayer.anchorPoint = CGPointMake(1.0, 0.5);
+            #endif
             leftSideLayer.position = CGPointMake(0.0, (leftSideLayer.bounds.size.height / 2.0));
             leftSideLayer.transform = CATransform3DMakeRotation(angle, 0.0, -1.0, 0.0);
-            leftSideLayer.contents = (id)[leftSideImage CGImage];
             {
                 CGFloat op = (clockwiseMove)?0.0:1.0;
                 leftSideLayer.opacity = op;
             }
+            #if RENDER_VIEW
             [mainLayer addSublayer:leftSideLayer];
+            #endif
         }
         
         { // leftSideShadowLayer
