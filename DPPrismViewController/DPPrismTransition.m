@@ -10,16 +10,18 @@
 #import "DPPrismTransition.h"
 #import "DPPrismViewControllerUtils.h"
 #import <QuartzCore/QuartzCore.h>
+#import "DPRenderViewHelper.h"
 
-#define DEFAULT_DURATION 0.6
-#define RENDER_VIEW      0
+static const NSTimeInterval defaultDuration = 0.6;
 
-#if RENDER_VIEW
-    #import "DPRenderViewHelper.h"
-#endif
+static NSString* const frontLayerKey     = @"frontLayer";
+static NSString* const rightSideLayerKey = @"rightSideLayer";
+static NSString* const leftSideLayerKey  = @"leftSideLayer";
+
 
 static BOOL _performTransitioning = NO;
 static BOOL _manualTransitioning  = NO;
+
 
 static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     CATransform3D t = CATransform3DIdentity;
@@ -38,65 +40,20 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     UIView* _leftSideView;
     
     UIView* _mainView; // この中でアニメーションをして最後に removeFromSuperview する
+    
+    NSMutableDictionary* _beforeLayerStatesDictionary;
 }
+@property (nonatomic, readonly) NSArray* arrayForCALayerStateKeys;
 @end
 
 
 @implementation DPPrismTransition
 
+#pragma mark - class method
+
 + (NSTimeInterval)defaultDuration
 {
-    return DEFAULT_DURATION;
-}
-
-- (NSString*)stringFromCATransform3D:(CATransform3D)transform
-{
-    NSMutableString* str = [NSMutableString string];
-    [str appendFormat:@"\n"];
-    [str appendFormat:@"m11 = %f \t", transform.m11];
-    [str appendFormat:@"m12 = %f \t", transform.m12];
-    [str appendFormat:@"m13 = %f \t", transform.m13];
-    [str appendFormat:@"m14 = %f \n", transform.m14];
-    [str appendFormat:@"m21 = %f \t", transform.m21];
-    [str appendFormat:@"m22 = %f \t", transform.m22];
-    [str appendFormat:@"m23 = %f \t", transform.m23];
-    [str appendFormat:@"m24 = %f \n", transform.m24];
-    [str appendFormat:@"m31 = %f \t", transform.m31];
-    [str appendFormat:@"m32 = %f \t", transform.m32];
-    [str appendFormat:@"m33 = %f \t", transform.m33];
-    [str appendFormat:@"m34 = %f \n", transform.m34];
-    [str appendFormat:@"m41 = %f \t", transform.m41];
-    [str appendFormat:@"m42 = %f \t", transform.m42];
-    [str appendFormat:@"m43 = %f \t", transform.m43];
-    [str appendFormat:@"m44 = %f \n", transform.m44];
-    return str;
-}
-
-- (void)showCATransform3D:(CATransform3D)transform
-{
-    ShowConsole(@"%@", [self stringFromCATransform3D:transform]);
-}
-
-- (void)showCALayerDetail:(CALayer*)layer
-{
-    ShowConsole(@"address     = %p", layer);
-    ShowConsole(@"bouds       = %@", NSStringFromCGRect(layer.bounds));
-    ShowConsole(@"frame       = %@", NSStringFromCGRect(layer.frame));
-    ShowConsole(@"anchorPoint = %@", NSStringFromCGPoint(layer.anchorPoint));
-    ShowConsole(@"position    = %@", NSStringFromCGPoint(layer.position));
-}
-
-- (void)showUIViewDetail:(UIView*)view key:(NSString*)key withCALayerDetail:(BOOL)withCALayerDetail
-{
-    if (key) {
-        ShowConsole("%@", key);
-    }
-    ShowConsole(@"address     = %p", view);
-    ShowConsole(@"bouds       = %@", NSStringFromCGRect(view.bounds));
-    ShowConsole(@"frame       = %@", NSStringFromCGRect(view.frame));
-    if (withCALayerDetail) {
-        [self showCALayerDetail:view.layer];
-    }
+    return defaultDuration;
 }
 
 #pragma mark - initializer
@@ -128,18 +85,22 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         _type          = type;
         _completion    = completion;
         
-        // set default values
-        _shadowColor = [UIColor blackColor];
-        _duration    = [[self class] defaultDuration];
-        _timingCurve = UIViewAnimationCurveEaseInOut;
-        _perspective = 700.0;
+        _beforeLayerStatesDictionary = [NSMutableDictionary dictionary];
         
+        // set default values
+        _shadowColor         = [UIColor blackColor];
+        _duration            = [[self class] defaultDuration];
+        _timingCurve         = UIViewAnimationCurveEaseInOut;
+        _perspective         = 700.0;
+        _useRenderViewMethod = NO;
+        
+        // make _mainView
         _mainView = [[UIView alloc] initWithFrame:CGRectZero]; // アニメーション実行直前にリサイズしてる
         _mainView.autoresizingMask        = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
         _mainView.backgroundColor         = [UIColor blackColor];
         _mainView.userInteractionEnabled  = NO;
         _mainView.layer.sublayerTransform = CATransform3DMakePerspective(_perspective);
-	}
+    }
     return self;
 }
 
@@ -208,6 +169,36 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
 	return kCAMediaTimingFunctionDefault;
 }
 
+- (NSArray*)arrayForCALayerStateKeys
+{
+    static NSArray* keys = nil;
+    if (keys == nil) {
+        keys = (@[
+                @"anchorPoint",
+                @"position",
+                @"transform",
+                @"masksToBounds",
+                @"sublayerTransform",
+                @"contentsScale",
+                @"rasterizationScale",
+                @"shouldRasterize",
+                ]);
+    }
+    return keys;
+}
+
+- (void)saveBeforeLayerState:(CALayer*)layer forKey:(NSString*)key
+{
+    NSDictionary* beforeStats = [layer dictionaryWithValuesForKeys:self.arrayForCALayerStateKeys];
+    [_beforeLayerStatesDictionary setObject:beforeStats forKey:key];
+}
+
+- (void)restoreBeforeLayerState:(CALayer*)layer forKey:(NSString*)key
+{
+    NSDictionary* beforeStates = [_beforeLayerStatesDictionary objectForKey:key];
+    [layer setValuesForKeysWithDictionary:beforeStates];
+}
+
 #pragma mark - implementation
 
 - (void)performTransition
@@ -252,42 +243,13 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     CALayer* frontLayer;
     CALayer* rightSideLayer;
     CALayer* leftSideLayer;
+    UIImage* frontImage;
+    UIImage* rightSideImage;
+    UIImage* leftSideImage;
     CAGradientLayer* frontShadowLayer;
     CAGradientLayer* rightSideShadowLayer;
     CAGradientLayer* leftSideShadowLayer;
     
-    #if !RENDER_VIEW
-    CGPoint beforeFrontLayerAnchorPoint             = _frontView.layer.anchorPoint;
-    CGPoint beforeFrontLayerPosition                = _frontView.layer.position;
-    CATransform3D beforeFrontLayerTransform         = _frontView.layer.transform;
-    CGRect  beforeFrontViewFrame                    = _frontView.frame;
-    BOOL beforeFrontLayerMaskToBounds               = _frontView.layer.masksToBounds;
-    CATransform3D beforeFrontlayerSublayerTransform = _frontView.layer.sublayerTransform;
-    CGFloat beforeFrontLayerContentsScale           = _frontView.layer.contentsScale;
-    CGFloat beforeFrontLayerRasterizationScale      = _frontView.layer.rasterizationScale;
-    BOOL beforeFrontLayerShouldRasterize            = _frontView.layer.shouldRasterize;
-
-    CGPoint beforeRightLayerAnchorPoint             = _rightSideView.layer.anchorPoint;
-    CGPoint beforeRightLayerPosition                = _rightSideView.layer.position;
-    CATransform3D beforeRightLayerTransform         = _rightSideView.layer.transform;
-    CGRect  beforeRightViewFrame                    = _rightSideView.frame;
-    BOOL beforeRightLayerMaskToBounds               = _rightSideView.layer.masksToBounds;
-    CATransform3D beforeRightlayerSublayerTransform = _rightSideView.layer.sublayerTransform;
-    CGFloat beforeRightLayerContentsScale           = _rightSideView.layer.contentsScale;
-    CGFloat beforeRightLayerRasterizationScale      = _rightSideView.layer.rasterizationScale;
-    BOOL beforeRightLayerShouldRasterize            = _rightSideView.layer.shouldRasterize;
-    
-    CGPoint beforeLeftLayerAnchorPoint              = _leftSideView.layer.anchorPoint;
-    CGPoint beforeLeftLayerPosition                 = _leftSideView.layer.position;
-    CATransform3D beforeLeftLayerTransform          = _leftSideView.layer.transform;
-    CGRect  beforeLeftViewFrame                     = _leftSideView.frame;
-    BOOL beforeLeftLayerMaskToBounds                = _leftSideView.layer.masksToBounds;
-    CATransform3D beforeLeftlayerSublayerTransform  = _leftSideView.layer.sublayerTransform;
-    CGFloat beforeLeftLayerContentsScale            = _leftSideView.layer.contentsScale;
-    CGFloat beforeLeftLayerRasterizationScale       = _leftSideView.layer.rasterizationScale;
-    BOOL beforeLeftLayerShouldRasterize             = _leftSideView.layer.shouldRasterize;
-    #endif
-        
     { // アニメーションの下準備
         [CATransaction begin];
         [CATransaction setAnimationDuration:0];
@@ -305,27 +267,28 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
             return shadowLayer;
         };
         
-        #if RENDER_VIEW
-        UIImage* frontImage     = [DPRenderViewHelper renderImageFromView:_frontView];
-        UIImage* rightSideImage = clockwiseMove?[DPRenderViewHelper renderImageFromView:_rightSideView]:nil;
-        UIImage* leftSideImage  = !clockwiseMove?[DPRenderViewHelper renderImageFromView:_leftSideView]:nil;
-        #endif
+        if (_useRenderViewMethod == YES) {
+            frontImage     = [DPRenderViewHelper renderImageFromView:_frontView];
+            rightSideImage = clockwiseMove?[DPRenderViewHelper renderImageFromView:_rightSideView]:nil;
+            leftSideImage  = !clockwiseMove?[DPRenderViewHelper renderImageFromView:_leftSideView]:nil;
+        }
         
         { // mainLayer
             mainLayer = layersView.layer;
             // これやらないと Retina にならない
-            mainLayer.contentsScale      = _mainView.layer.contentsScale      = [UIScreen mainScreen].scale;
-            mainLayer.rasterizationScale = _mainView.layer.rasterizationScale = [UIScreen mainScreen].scale;
-            mainLayer.shouldRasterize    = _mainView.layer.shouldRasterize    = YES;
+            layersView.layer.contentsScale      = [UIScreen mainScreen].scale;
+            layersView.layer.rasterizationScale = [UIScreen mainScreen].scale;
+            layersView.layer.shouldRasterize    = YES;
         }
         
         { // frontLayer
-            #if RENDER_VIEW
-            frontLayer = [CALayer layer];
-            frontLayer.contents = (id)[frontImage CGImage];
-            #else
-            frontLayer = _frontView.layer;
-            #endif
+            if (_useRenderViewMethod == YES) {
+                frontLayer = [CALayer layer];
+                frontLayer.contents = (id)[frontImage CGImage];
+            } else {
+                frontLayer = _frontView.layer;
+                [self saveBeforeLayerState:frontLayer forKey:frontLayerKey];
+            }
             frontLayer.bounds = CGRectMake(0, 0, _frontView.bounds.size.width, _frontView.bounds.size.height);
             frontLayer.anchorPoint = CGPointMake((clockwiseMove?1.0:0.0), 0.5);
             frontLayer.position = CGPointMake((clockwiseMove?frontLayer.bounds.size.width:0.0), (frontLayer.bounds.size.height / 2.0));
@@ -341,11 +304,11 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 CGFloat op = 1.0;
                 frontLayer.opacity = op;
             }
-            #if RENDER_VIEW
-            [mainLayer addSublayer:frontLayer];
-            #else
-            [layersView addSubview:_frontView];
-            #endif
+            if (_useRenderViewMethod == YES) {
+                [mainLayer addSublayer:frontLayer];
+            } else {
+                [layersView addSubview:_frontView];
+            }
         }
         
         { // frontShadowLayer
@@ -356,12 +319,13 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         }
         
         { // rightSideLayer
-            #if RENDER_VIEW
-            rightSideLayer = [CALayer layer];
-            rightSideLayer.contents = (id)[rightSideImage CGImage];
-            #else
-            rightSideLayer = _rightSideView.layer;
-            #endif
+            if (_useRenderViewMethod == YES) {
+                rightSideLayer = [CALayer layer];
+                rightSideLayer.contents = (id)[rightSideImage CGImage];
+            } else {
+                rightSideLayer = _rightSideView.layer;
+                [self saveBeforeLayerState:rightSideLayer forKey:rightSideLayerKey];
+            }
             rightSideLayer.bounds = CGRectMake(0, 0, _rightSideView.bounds.size.width, _rightSideView.bounds.size.height);
             rightSideLayer.anchorPoint = CGPointMake(0.0, 0.5);
             rightSideLayer.position = CGPointMake((rightSideLayer.bounds.size.width), (rightSideLayer.bounds.size.height / 2.0));
@@ -377,11 +341,11 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 CGFloat op = (clockwiseMove)?1.0:0.0;
                 rightSideLayer.opacity = op;
             }
-            #if RENDER_VIEW
-            [mainLayer addSublayer:rightSideLayer];
-            #else
-            [layersView addSubview:_rightSideView];
-            #endif
+            if (_useRenderViewMethod == YES) {
+                [mainLayer addSublayer:rightSideLayer];
+            } else {
+                [layersView addSubview:_rightSideView];
+            }
         }
         
         { // rightSideShadowLayer
@@ -392,12 +356,13 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         }
         
         { // leftSideLayer
-            #if RENDER_VIEW
-            leftSideLayer = [CALayer layer];
-            leftSideLayer.contents = (id)[leftSideImage CGImage];
-            #else
-            leftSideLayer = _leftSideView.layer;
-            #endif
+            if (_useRenderViewMethod == YES) {
+                leftSideLayer = [CALayer layer];
+                leftSideLayer.contents = (id)[leftSideImage CGImage];
+            } else {
+                leftSideLayer = _leftSideView.layer;
+                [self saveBeforeLayerState:leftSideLayer forKey:leftSideLayerKey];
+            }
             leftSideLayer.bounds = CGRectMake(0, 0, _leftSideView.bounds.size.width, _leftSideView.bounds.size.height);
             leftSideLayer.anchorPoint = CGPointMake(1.0, 0.5);
             leftSideLayer.position = CGPointMake(0.0, (leftSideLayer.bounds.size.height / 2.0));
@@ -413,11 +378,11 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 CGFloat op = (clockwiseMove)?0.0:1.0;
                 leftSideLayer.opacity = op;
             }
-            #if RENDER_VIEW
-            [mainLayer addSublayer:leftSideLayer];
-            #else
-            [layersView addSubview:_leftSideView];
-            #endif
+            if (_useRenderViewMethod == YES) {
+                [mainLayer addSublayer:leftSideLayer];
+            } else {
+                [layersView addSubview:_leftSideView];
+            }
         }
         
         { // leftSideShadowLayer
@@ -441,47 +406,21 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
             [rightSideShadowLayer removeFromSuperlayer];
             [leftSideShadowLayer  removeFromSuperlayer];
             
-            #if !RENDER_VIEW
-            frontLayer.anchorPoint            = beforeFrontLayerAnchorPoint;
-            frontLayer.position               = beforeFrontLayerPosition;
-            frontLayer.transform              = beforeFrontLayerTransform;
-            frontLayer.masksToBounds          = beforeFrontLayerMaskToBounds;
-            frontLayer.sublayerTransform      = beforeFrontlayerSublayerTransform;
-            frontLayer.contentsScale          = beforeFrontLayerContentsScale;
-            frontLayer.rasterizationScale     = beforeFrontLayerRasterizationScale;
-            frontLayer.shouldRasterize        = beforeFrontLayerShouldRasterize;
-            _frontView.frame                  = beforeFrontViewFrame;
-            
-            rightSideLayer.anchorPoint        = beforeRightLayerAnchorPoint;
-            rightSideLayer.position           = beforeRightLayerPosition;
-            rightSideLayer.transform          = beforeRightLayerTransform;
-            rightSideLayer.masksToBounds      = beforeRightLayerMaskToBounds;
-            rightSideLayer.sublayerTransform  = beforeRightlayerSublayerTransform;
-            rightSideLayer.contentsScale      = beforeRightLayerContentsScale;
-            rightSideLayer.rasterizationScale = beforeRightLayerRasterizationScale;
-            rightSideLayer.shouldRasterize    = beforeRightLayerShouldRasterize;
-            _rightSideView.frame              = beforeRightViewFrame;
-            
-            leftSideLayer.anchorPoint         = beforeLeftLayerAnchorPoint;
-            leftSideLayer.position            = beforeLeftLayerPosition;
-            leftSideLayer.transform           = beforeLeftLayerTransform;
-            leftSideLayer.masksToBounds       = beforeLeftLayerMaskToBounds;
-            leftSideLayer.sublayerTransform   = beforeLeftlayerSublayerTransform;
-            leftSideLayer.contentsScale       = beforeLeftLayerContentsScale;
-            leftSideLayer.rasterizationScale  = beforeLeftLayerRasterizationScale;
-            leftSideLayer.shouldRasterize     = beforeLeftLayerShouldRasterize;
-            _leftSideView.frame               = beforeLeftViewFrame;
-            
-            [frontLayer removeAllAnimations];
-            [rightSideLayer removeAllAnimations];
-            [leftSideLayer removeAllAnimations];
-            [frontShadowLayer removeAllAnimations];
-            [rightSideShadowLayer removeAllAnimations];
-            [leftSideShadowLayer removeAllAnimations];
-                        
-            [_rootView insertSubview:(clockwiseMove?_rightSideView:_leftSideView) atIndex:0];
-            [_frontView removeFromSuperview];
-            #endif
+            if (_useRenderViewMethod == NO) {
+                [self restoreBeforeLayerState:frontLayer forKey:frontLayerKey];
+                [self restoreBeforeLayerState:rightSideLayer forKey:rightSideLayerKey];
+                [self restoreBeforeLayerState:leftSideLayer forKey:leftSideLayerKey];
+                
+                [frontLayer           removeAllAnimations];
+                [rightSideLayer       removeAllAnimations];
+                [leftSideLayer        removeAllAnimations];
+                [frontShadowLayer     removeAllAnimations];
+                [rightSideShadowLayer removeAllAnimations];
+                [leftSideShadowLayer  removeAllAnimations];
+                
+                [_rootView insertSubview:(clockwiseMove?_rightSideView:_leftSideView) atIndex:0];
+                [_frontView removeFromSuperview];
+            }
             
             _performTransitioning = NO;
             if ([self.delegate respondsToSelector:@selector(prismTransitionDidStopTransition:)]) {
@@ -579,14 +518,14 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         [CATransaction commit];
     }
     
-    #if RENDER_VIEW
-    // 適切なタイミングで view(?:Will|Did)(?:Disa|A)?ppear が呼ばれるように…
-    [UIView animateWithDuration:self.duration
-                     animations:^{
-                         [_rootView insertSubview:(clockwiseMove?_rightSideView:_leftSideView) atIndex:0];
-                         [_frontView removeFromSuperview];
-                     }];
-    #endif
+    if (_useRenderViewMethod == YES) {
+        // 適切なタイミングで view(?:Will|Did)(?:Disa|A)?ppear が呼ばれるように…
+        [UIView animateWithDuration:self.duration
+                         animations:^{
+                             [_rootView insertSubview:(clockwiseMove?_rightSideView:_leftSideView) atIndex:0];
+                             [_frontView removeFromSuperview];
+                         }];
+    }
     
     if ([self.delegate respondsToSelector:@selector(prismTransitionDidStartTransition:)]) {
         [self.delegate prismTransitionDidStartTransition:self];
@@ -663,6 +602,58 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     // ToDo : 後で書く
     if ([self.delegate respondsToSelector:@selector(prismTransitionDidStopTransition:)]) {
         [self.delegate prismTransitionDidStopTransition:self];
+    }
+}
+
+#pragma mark - for debug
+
+- (NSString*)stringFromCATransform3D:(CATransform3D)transform
+{
+    NSMutableString* str = [NSMutableString string];
+    [str appendFormat:@"\n"];
+    [str appendFormat:@"m11 = %f \t", transform.m11];
+    [str appendFormat:@"m12 = %f \t", transform.m12];
+    [str appendFormat:@"m13 = %f \t", transform.m13];
+    [str appendFormat:@"m14 = %f \n", transform.m14];
+    [str appendFormat:@"m21 = %f \t", transform.m21];
+    [str appendFormat:@"m22 = %f \t", transform.m22];
+    [str appendFormat:@"m23 = %f \t", transform.m23];
+    [str appendFormat:@"m24 = %f \n", transform.m24];
+    [str appendFormat:@"m31 = %f \t", transform.m31];
+    [str appendFormat:@"m32 = %f \t", transform.m32];
+    [str appendFormat:@"m33 = %f \t", transform.m33];
+    [str appendFormat:@"m34 = %f \n", transform.m34];
+    [str appendFormat:@"m41 = %f \t", transform.m41];
+    [str appendFormat:@"m42 = %f \t", transform.m42];
+    [str appendFormat:@"m43 = %f \t", transform.m43];
+    [str appendFormat:@"m44 = %f \n", transform.m44];
+    return str;
+}
+
+- (void)showCATransform3D:(CATransform3D)transform
+{
+    ShowConsole(@"%@", [self stringFromCATransform3D:transform]);
+}
+
+- (void)showCALayerDetail:(CALayer*)layer
+{
+    ShowConsole(@"address     = %p", layer);
+    ShowConsole(@"bouds       = %@", NSStringFromCGRect(layer.bounds));
+    ShowConsole(@"frame       = %@", NSStringFromCGRect(layer.frame));
+    ShowConsole(@"anchorPoint = %@", NSStringFromCGPoint(layer.anchorPoint));
+    ShowConsole(@"position    = %@", NSStringFromCGPoint(layer.position));
+}
+
+- (void)showUIViewDetail:(UIView*)view key:(NSString*)key withCALayerDetail:(BOOL)withCALayerDetail
+{
+    if (key) {
+        ShowConsole("%@", key);
+    }
+    ShowConsole(@"address     = %p", view);
+    ShowConsole(@"bouds       = %@", NSStringFromCGRect(view.bounds));
+    ShowConsole(@"frame       = %@", NSStringFromCGRect(view.frame));
+    if (withCALayerDetail) {
+        [self showCALayerDetail:view.layer];
     }
 }
 

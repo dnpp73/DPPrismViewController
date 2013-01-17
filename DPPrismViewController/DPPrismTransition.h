@@ -33,10 +33,11 @@ typedef enum {
 @property (nonatomic, weak) id<DPPrismTransitionDelegate> delegate;
 
 // configure animation (optional)
-@property (nonatomic)         UIColor*             shadowColor; // default is [UIColor blackColor]
-@property (nonatomic, assign) NSTimeInterval       duration;    // default is [DPPrismTransition defaultDuration]
-@property (nonatomic, assign) UIViewAnimationCurve timingCurve; // default is UIViewAnimationCurveEaseInOut
-@property (nonatomic, assign) float                perspective; // default is 700.0
+@property (nonatomic)         UIColor*             shadowColor;         // default is [UIColor blackColor]
+@property (nonatomic, assign) NSTimeInterval       duration;            // default is [DPPrismTransition defaultDuration]
+@property (nonatomic, assign) UIViewAnimationCurve timingCurve;         // default is UIViewAnimationCurveEaseInOut
+@property (nonatomic, assign) float                perspective;         // default is 700.0
+@property (nonatomic, assign) BOOL                 useRenderViewMethod; // default is NO
 
 @property (nonatomic, readonly, getter=isPerformTransitioning) BOOL performTransitioning;
 @property (nonatomic, readonly, getter=isManualTransitioning)  BOOL manualTransitioning;
