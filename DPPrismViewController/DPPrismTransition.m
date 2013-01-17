@@ -257,23 +257,35 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     CAGradientLayer* leftSideShadowLayer;
     
     #if !RENDER_VIEW
-    CGPoint beforeFrontLayerAnchorPoint     = _frontView.layer.anchorPoint;
-    CGPoint beforeFrontLayerPosition        = _frontView.layer.position;
-    CATransform3D beforeFrontLayerTransform = _frontView.layer.transform;
-    CGRect  beforeFrontViewFrame            = _frontView.frame;
-    BOOL beforeFrontLayerMaskToBounds       = _frontView.layer.masksToBounds;
+    CGPoint beforeFrontLayerAnchorPoint             = _frontView.layer.anchorPoint;
+    CGPoint beforeFrontLayerPosition                = _frontView.layer.position;
+    CATransform3D beforeFrontLayerTransform         = _frontView.layer.transform;
+    CGRect  beforeFrontViewFrame                    = _frontView.frame;
+    BOOL beforeFrontLayerMaskToBounds               = _frontView.layer.masksToBounds;
+    CATransform3D beforeFrontlayerSublayerTransform = _frontView.layer.sublayerTransform;
+    CGFloat beforeFrontLayerContentsScale           = _frontView.layer.contentsScale;
+    CGFloat beforeFrontLayerRasterizationScale      = _frontView.layer.rasterizationScale;
+    BOOL beforeFrontLayerShouldRasterize            = _frontView.layer.shouldRasterize;
+
+    CGPoint beforeRightLayerAnchorPoint             = _rightSideView.layer.anchorPoint;
+    CGPoint beforeRightLayerPosition                = _rightSideView.layer.position;
+    CATransform3D beforeRightLayerTransform         = _rightSideView.layer.transform;
+    CGRect  beforeRightViewFrame                    = _rightSideView.frame;
+    BOOL beforeRightLayerMaskToBounds               = _rightSideView.layer.masksToBounds;
+    CATransform3D beforeRightlayerSublayerTransform = _rightSideView.layer.sublayerTransform;
+    CGFloat beforeRightLayerContentsScale           = _rightSideView.layer.contentsScale;
+    CGFloat beforeRightLayerRasterizationScale      = _rightSideView.layer.rasterizationScale;
+    BOOL beforeRightLayerShouldRasterize            = _rightSideView.layer.shouldRasterize;
     
-    CGPoint beforeRightLayerAnchorPoint     = _rightSideView.layer.anchorPoint;
-    CGPoint beforeRightLayerPosition        = _rightSideView.layer.position;
-    CATransform3D beforeRightLayerTransform = _rightSideView.layer.transform;
-    CGRect  beforeRightViewFrame            = _rightSideView.frame;
-    BOOL beforeRightLayerMaskToBounds       = _rightSideView.layer.masksToBounds;
-    
-    CGPoint beforeLeftLayerAnchorPoint      = _leftSideView.layer.anchorPoint;
-    CGPoint beforeLeftLayerPosition         = _leftSideView.layer.position;
-    CATransform3D beforeLeftLayerTransform  = _leftSideView.layer.transform;
-    CGRect  beforeLeftViewFrame             = _leftSideView.frame;
-    BOOL beforeLeftLayerMaskToBounds        = _leftSideView.layer.masksToBounds;
+    CGPoint beforeLeftLayerAnchorPoint              = _leftSideView.layer.anchorPoint;
+    CGPoint beforeLeftLayerPosition                 = _leftSideView.layer.position;
+    CATransform3D beforeLeftLayerTransform          = _leftSideView.layer.transform;
+    CGRect  beforeLeftViewFrame                     = _leftSideView.frame;
+    BOOL beforeLeftLayerMaskToBounds                = _leftSideView.layer.masksToBounds;
+    CATransform3D beforeLeftlayerSublayerTransform  = _leftSideView.layer.sublayerTransform;
+    CGFloat beforeLeftLayerContentsScale            = _leftSideView.layer.contentsScale;
+    CGFloat beforeLeftLayerRasterizationScale       = _leftSideView.layer.rasterizationScale;
+    BOOL beforeLeftLayerShouldRasterize             = _leftSideView.layer.shouldRasterize;
     #endif
         
     { // アニメーションの下準備
@@ -302,9 +314,9 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         { // mainLayer
             mainLayer = layersView.layer;
             // これやらないと Retina にならない
-            mainLayer.contentsScale      = [UIScreen mainScreen].scale;
-            mainLayer.rasterizationScale = [UIScreen mainScreen].scale;
-            mainLayer.shouldRasterize    = YES;
+            mainLayer.contentsScale      = _mainView.layer.contentsScale      = [UIScreen mainScreen].scale;
+            mainLayer.rasterizationScale = _mainView.layer.rasterizationScale = [UIScreen mainScreen].scale;
+            mainLayer.shouldRasterize    = _mainView.layer.shouldRasterize    = YES;
         }
         
         { // frontLayer
@@ -320,6 +332,11 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
             frontLayer.transform = CATransform3DIdentity;
             frontLayer.masksToBounds = YES;
             frontLayer.sublayerTransform = mainLayer.sublayerTransform; // iOS 5 だとこれ入れとかないとおかしいことになる…
+            {   // レンダリングしないで CALayer 使い回す時これやっとかないと Retina にならない
+                frontLayer.contentsScale = [UIScreen mainScreen].scale;
+                frontLayer.rasterizationScale = [UIScreen mainScreen].scale;
+                frontLayer.shouldRasterize = YES;
+            }
             {
                 CGFloat op = 1.0;
                 frontLayer.opacity = op;
@@ -351,6 +368,11 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
             rightSideLayer.transform = CATransform3DMakeRotation(angle, 0.0, 1.0, 0.0);
             rightSideLayer.masksToBounds = YES;
             rightSideLayer.sublayerTransform = mainLayer.sublayerTransform; // iOS 5 だとこれ入れとかないとおかしいことになる…
+            {   // レンダリングしないで CALayer 使い回す時これやっとかないと Retina にならない
+                rightSideLayer.contentsScale = [UIScreen mainScreen].scale;
+                rightSideLayer.rasterizationScale = [UIScreen mainScreen].scale;
+                rightSideLayer.shouldRasterize = YES;
+            }
             {
                 CGFloat op = (clockwiseMove)?1.0:0.0;
                 rightSideLayer.opacity = op;
@@ -382,6 +404,11 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
             leftSideLayer.transform = CATransform3DMakeRotation(angle, 0.0, -1.0, 0.0);
             leftSideLayer.masksToBounds = YES;
             leftSideLayer.sublayerTransform = mainLayer.sublayerTransform; // iOS 5 だとこれ入れとかないとおかしいことになる…
+            {   // レンダリングしないで CALayer 使い回す時これやっとかないと Retina にならない
+                leftSideLayer.contentsScale = [UIScreen mainScreen].scale;
+                leftSideLayer.rasterizationScale = [UIScreen mainScreen].scale;
+                leftSideLayer.shouldRasterize = YES;
+            }
             {
                 CGFloat op = (clockwiseMove)?0.0:1.0;
                 leftSideLayer.opacity = op;
@@ -410,24 +437,40 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         [CATransaction setCompletionBlock:^{
             [_mainView removeFromSuperview];
             
+            [frontShadowLayer     removeFromSuperlayer];
+            [rightSideShadowLayer removeFromSuperlayer];
+            [leftSideShadowLayer  removeFromSuperlayer];
+            
             #if !RENDER_VIEW
-            frontLayer.anchorPoint   = beforeFrontLayerAnchorPoint;
-            frontLayer.position      = beforeFrontLayerPosition;
-            frontLayer.transform     = beforeFrontLayerTransform;
-            frontLayer.masksToBounds = beforeFrontLayerMaskToBounds;
-            _frontView.frame         = beforeFrontViewFrame;
+            frontLayer.anchorPoint            = beforeFrontLayerAnchorPoint;
+            frontLayer.position               = beforeFrontLayerPosition;
+            frontLayer.transform              = beforeFrontLayerTransform;
+            frontLayer.masksToBounds          = beforeFrontLayerMaskToBounds;
+            frontLayer.sublayerTransform      = beforeFrontlayerSublayerTransform;
+            frontLayer.contentsScale          = beforeFrontLayerContentsScale;
+            frontLayer.rasterizationScale     = beforeFrontLayerRasterizationScale;
+            frontLayer.shouldRasterize        = beforeFrontLayerShouldRasterize;
+            _frontView.frame                  = beforeFrontViewFrame;
             
-            rightSideLayer.anchorPoint   = beforeRightLayerAnchorPoint;
-            rightSideLayer.position      = beforeRightLayerPosition;
-            rightSideLayer.transform     = beforeRightLayerTransform;
-            rightSideLayer.masksToBounds = beforeRightLayerMaskToBounds;
-            _rightSideView.frame         = beforeRightViewFrame;
+            rightSideLayer.anchorPoint        = beforeRightLayerAnchorPoint;
+            rightSideLayer.position           = beforeRightLayerPosition;
+            rightSideLayer.transform          = beforeRightLayerTransform;
+            rightSideLayer.masksToBounds      = beforeRightLayerMaskToBounds;
+            rightSideLayer.sublayerTransform  = beforeRightlayerSublayerTransform;
+            rightSideLayer.contentsScale      = beforeRightLayerContentsScale;
+            rightSideLayer.rasterizationScale = beforeRightLayerRasterizationScale;
+            rightSideLayer.shouldRasterize    = beforeRightLayerShouldRasterize;
+            _rightSideView.frame              = beforeRightViewFrame;
             
-            leftSideLayer.anchorPoint   = beforeLeftLayerAnchorPoint;
-            leftSideLayer.position      = beforeLeftLayerPosition;
-            leftSideLayer.transform     = beforeLeftLayerTransform;
-            leftSideLayer.masksToBounds = beforeLeftLayerMaskToBounds;
-            _leftSideView.frame         = beforeLeftViewFrame;
+            leftSideLayer.anchorPoint         = beforeLeftLayerAnchorPoint;
+            leftSideLayer.position            = beforeLeftLayerPosition;
+            leftSideLayer.transform           = beforeLeftLayerTransform;
+            leftSideLayer.masksToBounds       = beforeLeftLayerMaskToBounds;
+            leftSideLayer.sublayerTransform   = beforeLeftlayerSublayerTransform;
+            leftSideLayer.contentsScale       = beforeLeftLayerContentsScale;
+            leftSideLayer.rasterizationScale  = beforeLeftLayerRasterizationScale;
+            leftSideLayer.shouldRasterize     = beforeLeftLayerShouldRasterize;
+            _leftSideView.frame               = beforeLeftViewFrame;
             
             [frontLayer removeAllAnimations];
             [rightSideLayer removeAllAnimations];
@@ -435,11 +478,7 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
             [frontShadowLayer removeAllAnimations];
             [rightSideShadowLayer removeAllAnimations];
             [leftSideShadowLayer removeAllAnimations];
-            
-            [frontShadowLayer removeFromSuperlayer];
-            [rightSideShadowLayer removeFromSuperlayer];
-            [leftSideShadowLayer removeFromSuperlayer];
-            
+                        
             [_rootView insertSubview:(clockwiseMove?_rightSideView:_leftSideView) atIndex:0];
             [_frontView removeFromSuperview];
             #endif
