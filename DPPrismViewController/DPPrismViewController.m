@@ -513,6 +513,7 @@
         
         #ifdef DEMO_MODE
         _prismTransition.duration *= 3;
+//        _prismTransition.useRenderViewMethod = YES;
         #endif
         
         [_prismTransition performTransition];

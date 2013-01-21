@@ -310,6 +310,9 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 CGFloat op = 1.0;
                 frontLayer.opacity = op;
             }
+            if (_useRenderViewMethod == NO) {
+                [_frontView removeFromSuperview]; // 適切なタイミングで view(?:Will|Did)(?:Disa|A)?ppear が呼ばれるように。ただし animated だけがどうしようもない。
+            }
             [mainLayer addSublayer:frontLayer];
         }
         
@@ -412,8 +415,9 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 [rightSideShadowLayer removeAllAnimations];
                 [leftSideShadowLayer  removeAllAnimations];
                 
-                [_rootView insertSubview:(clockwiseMove?_rightSideView:_leftSideView) atIndex:0];
-                [_frontView removeFromSuperview];
+                UIView* destinationView = clockwiseMove?_rightSideView:_leftSideView;
+                destinationView.frame = _rootView.bounds; // 着信やテザリングでステータスバーの高さが変わってる可能性を考慮
+                [_rootView insertSubview:destinationView atIndex:0]; // 適切なタイミングで view(?:Will|Did)(?:Disa|A)?ppear が呼ばれるように。ただし animated だけがどうしようもない。
             }
             
             _performTransitioning = NO;
@@ -513,7 +517,7 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     }
     
     if (_useRenderViewMethod == YES) {
-        // 適切なタイミングで view(?:Will|Did)(?:Disa|A)?ppear が呼ばれるように…
+        // 適切なタイミングで view(?:Will|Did)(?:Disa|A)?ppear が呼ばれるように。ただし animated だけがどうしようもない。こう書くと iOS 6 でステータスバーの色もアニメーションで変わるので。
         [UIView animateWithDuration:self.duration
                          animations:^{
                              [_rootView insertSubview:(clockwiseMove?_rightSideView:_leftSideView) atIndex:0];
