@@ -517,7 +517,7 @@
         
         [_prismTransition performTransition];
     }
-    //
+    // DPPrismTransition の中でやってることは大体こんな感じなんだけど、うーん。
     else {
         UIView* destinationView = nil;
         

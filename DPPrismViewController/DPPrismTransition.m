@@ -240,7 +240,8 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     layersView.layer.sublayerTransform = _mainView.layer.sublayerTransform;
     [_mainView addSubview:layersView];
     
-    BOOL clockwiseMove = (_type == DPPrismTransitionTypeClockwise);
+    BOOL clockwiseMove        = (_type == DPPrismTransitionTypeClockwise);
+    BOOL counterclockwiseMove = (_type == DPPrismTransitionTypeCounterclockwise);
     
     float angle = (2 * M_PI)/(float)_sides;
     
@@ -274,8 +275,8 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         
         if (_useRenderViewMethod == YES) {
             frontImage     = [DPRenderViewHelper renderImageFromView:_frontView];
-            rightSideImage = clockwiseMove?[DPRenderViewHelper renderImageFromView:_rightSideView]:nil;
-            leftSideImage  = !clockwiseMove?[DPRenderViewHelper renderImageFromView:_leftSideView]:nil;
+            rightSideImage = (clockwiseMove?[DPRenderViewHelper renderImageFromView:_rightSideView]:nil);
+            leftSideImage  = (counterclockwiseMove?[DPRenderViewHelper renderImageFromView:_leftSideView]:nil);
         }
         
         { // mainLayer
@@ -319,7 +320,7 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
             frontShadowLayer.frame = frontLayer.bounds;
         }
         
-        { // rightSideLayer
+       if (clockwiseMove) { // rightSideLayer
             if (_useRenderViewMethod == YES) {
                 rightSideLayer = [CALayer layer];
                 rightSideLayer.contents = (id)[rightSideImage CGImage];
@@ -342,17 +343,17 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 CGFloat op = (clockwiseMove)?1.0:0.0;
                 rightSideLayer.opacity = op;
             }
-            [layersView addSubview:_rightSideView];
+            [mainLayer addSublayer:rightSideLayer];
         }
         
-        { // rightSideShadowLayer
+        if (clockwiseMove) { // rightSideShadowLayer
             rightSideShadowLayer = makeShadowLayer(CGPointMake(0.0, 0.5), CGPointMake(1.0, 0.5));
             [rightSideLayer addSublayer:rightSideShadowLayer];
             rightSideShadowLayer.opacity = 1.0;
             rightSideShadowLayer.frame = rightSideLayer.bounds;
         }
         
-        { // leftSideLayer
+        if (counterclockwiseMove) { // leftSideLayer
             if (_useRenderViewMethod == YES) {
                 leftSideLayer = [CALayer layer];
                 leftSideLayer.contents = (id)[leftSideImage CGImage];
@@ -375,10 +376,10 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 CGFloat op = (clockwiseMove)?0.0:1.0;
                 leftSideLayer.opacity = op;
             }
-            [layersView addSubview:_leftSideView];
+            [mainLayer addSublayer:leftSideLayer];
         }
         
-        { // leftSideShadowLayer
+        if (counterclockwiseMove) { // leftSideShadowLayer
             leftSideShadowLayer = makeShadowLayer(CGPointMake(1.0, 0.5), CGPointMake(0.0, 0.5));
             [leftSideLayer addSublayer:leftSideShadowLayer];
             leftSideShadowLayer.opacity = 1.0;
