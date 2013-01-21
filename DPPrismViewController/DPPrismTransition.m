@@ -189,12 +189,18 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
 
 - (void)saveBeforeLayerState:(CALayer*)layer forKey:(NSString*)key
 {
+    if (layer == nil || key == nil)
+        return;
+    
     NSDictionary* beforeStats = [layer dictionaryWithValuesForKeys:self.arrayForCALayerStateKeys];
     [_beforeLayerStatesDictionary setObject:beforeStats forKey:key];
 }
 
 - (void)restoreBeforeLayerState:(CALayer*)layer forKey:(NSString*)key
 {
+    if (layer == nil || key == nil)
+        return;
+    
     NSDictionary* beforeStates = [_beforeLayerStatesDictionary objectForKey:key];
     [layer setValuesForKeysWithDictionary:beforeStates];
 }
@@ -213,13 +219,12 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
     } else if (_rootView      == nil ||
                _mainView      == nil ||
                _frontView     == nil ||
-               _rightSideView == nil ||
-               _leftSideView  == nil) {
+               (_type == DPPrismTransitionTypeClockwise        && _rightSideView == nil) ||
+               (_type == DPPrismTransitionTypeCounterclockwise && _leftSideView  == nil)) {
         ShowConsole(@"各種 view のいずれかが nil なのでどうしようもない。");
         return;
-    } else if (!CGSizeEqualToSize(_frontView.bounds.size, _rightSideView.bounds.size) ||
-               !CGSizeEqualToSize(_frontView.bounds.size, _leftSideView.bounds.size)  ||
-               !CGSizeEqualToSize(_rightSideView.bounds.size, _leftSideView.bounds.size)) {
+    } else if ((_type == DPPrismTransitionTypeClockwise        && CGSizeEqualToSize(_frontView.bounds.size, _rightSideView.bounds.size) == NO) ||
+               (_type == DPPrismTransitionTypeCounterclockwise && CGSizeEqualToSize(_frontView.bounds.size, _leftSideView.bounds.size)  == NO)) {
         ShowConsole(@"_frontView と _rightSideView と _leftSideView は同じサイズじゃないとダメよ。");
         return;
     }
@@ -276,9 +281,9 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         { // mainLayer
             mainLayer = layersView.layer;
             // これやらないと Retina にならない
-            layersView.layer.contentsScale      = [UIScreen mainScreen].scale;
-            layersView.layer.rasterizationScale = [UIScreen mainScreen].scale;
-            layersView.layer.shouldRasterize    = YES;
+            mainLayer.contentsScale      = [UIScreen mainScreen].scale;
+            mainLayer.rasterizationScale = [UIScreen mainScreen].scale;
+            mainLayer.shouldRasterize    = YES;
         }
         
         { // frontLayer
@@ -304,11 +309,7 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 CGFloat op = 1.0;
                 frontLayer.opacity = op;
             }
-            if (_useRenderViewMethod == YES) {
-                [mainLayer addSublayer:frontLayer];
-            } else {
-                [layersView addSubview:_frontView];
-            }
+            [mainLayer addSublayer:frontLayer];
         }
         
         { // frontShadowLayer
@@ -341,11 +342,7 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 CGFloat op = (clockwiseMove)?1.0:0.0;
                 rightSideLayer.opacity = op;
             }
-            if (_useRenderViewMethod == YES) {
-                [mainLayer addSublayer:rightSideLayer];
-            } else {
-                [layersView addSubview:_rightSideView];
-            }
+            [layersView addSubview:_rightSideView];
         }
         
         { // rightSideShadowLayer
@@ -378,11 +375,7 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                 CGFloat op = (clockwiseMove)?0.0:1.0;
                 leftSideLayer.opacity = op;
             }
-            if (_useRenderViewMethod == YES) {
-                [mainLayer addSublayer:leftSideLayer];
-            } else {
-                [layersView addSubview:_leftSideView];
-            }
+            [layersView addSubview:_leftSideView];
         }
         
         { // leftSideShadowLayer
@@ -548,9 +541,9 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
                _leftSideView  == nil) {
         ShowConsole(@"各種 view のいずれかが nil なのでどうしようもない。");
         return;
-    } else if (!CGSizeEqualToSize(_frontView.bounds.size, _rightSideView.bounds.size) ||
-               !CGSizeEqualToSize(_frontView.bounds.size, _leftSideView.bounds.size)  ||
-               !CGSizeEqualToSize(_rightSideView.bounds.size, _leftSideView.bounds.size)) {
+    } else if (CGSizeEqualToSize(_frontView.bounds.size, _rightSideView.bounds.size)    == NO ||
+               CGSizeEqualToSize(_frontView.bounds.size, _leftSideView.bounds.size)     == NO||
+               CGSizeEqualToSize(_rightSideView.bounds.size, _leftSideView.bounds.size) == NO) {
         ShowConsole(@"_frontView と _rightSideView と _leftSideView は同じサイズじゃないとダメよ。");
         return;
     }

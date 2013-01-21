@@ -366,7 +366,7 @@
     
     // 前処理
     if ([_viewControllers objectAtIndex:index] == _visibleViewController) {
-        [self rotateViewClockwiseWithAnimated:NO];
+        [self rotateClockwiseWithAnimated:NO];
     }
     
     // 実行
@@ -413,7 +413,7 @@
     }
 }
 
-- (void)rotateViewClockwiseWithAnimated:(BOOL)animated
+- (void)rotateClockwiseWithAnimated:(BOOL)animated
 {
     // インスタンスの状態チェック
     if (_viewControllers.count == 0) {
@@ -428,14 +428,9 @@
     }
     
     // 実行の前準備
-    // 説明変数
     UIViewController* frontViewController     = _visibleViewController;
     UIViewController* rightSideViewController = self.clockwiseViewController;
-    UIViewController* leftSideViewController  = self.counterclockwiseViewController;
-    leftSideViewController.view.frame = rightSideViewController.view.frame = frontViewController.view.frame = _rootView.frame = self.view.bounds;
-    
-    // 時計周り専用
-    DPPrismTransitionType type = DPPrismTransitionTypeClockwise;
+    rightSideViewController.view.frame = frontViewController.view.frame = _rootView.frame = self.view.bounds;
     __weak DPPrismViewController* w_self = self;
     void (^completion)(BOOL) = ^(BOOL finished){
         if (finished) {
@@ -448,13 +443,13 @@
     // 実行
     [self performTransitionWithfrontView:frontViewController.view
                            rightSideView:rightSideViewController.view
-                            leftSideView:leftSideViewController.view
+                            leftSideView:nil
                                 animated:animated
-                                    type:type
+                                    type:DPPrismTransitionTypeClockwise
                               completion:completion];
 }
 
-- (void)rotateViewCounterclockwiseWithAnimated:(BOOL)animated
+- (void)rotateCounterclockwiseWithAnimated:(BOOL)animated
 {
     // インスタンスの状態チェック
     if (_viewControllers.count == 0) {
@@ -469,14 +464,9 @@
     }
     
     // 実行の前準備
-    // 説明変数
     UIViewController* frontViewController     = _visibleViewController;
-    UIViewController* rightSideViewController = self.clockwiseViewController;
     UIViewController* leftSideViewController  = self.counterclockwiseViewController;
-    leftSideViewController.view.frame = rightSideViewController.view.frame = frontViewController.view.frame = _rootView.frame = self.view.bounds;
-    
-    // 反時計周り専用
-    DPPrismTransitionType type = DPPrismTransitionTypeCounterclockwise;
+    leftSideViewController.view.frame = frontViewController.view.frame = _rootView.frame = self.view.bounds;
     __weak DPPrismViewController* w_self = self;
     void (^completion)(BOOL) = ^(BOOL finished){
         if (finished) {
@@ -488,10 +478,10 @@
     
     // 実行
     [self performTransitionWithfrontView:frontViewController.view
-                           rightSideView:rightSideViewController.view
+                           rightSideView:nil
                             leftSideView:leftSideViewController.view
                                 animated:animated
-                                    type:type
+                                    type:DPPrismTransitionTypeCounterclockwise
                               completion:completion];
 }
 
@@ -593,7 +583,7 @@
         return;
     }
     
-    [(DPPrismViewController*)self.parentViewController rotateViewClockwiseWithAnimated:animated];
+    [(DPPrismViewController*)self.parentViewController rotateClockwiseWithAnimated:animated];
 }
 
 - (void)rotateViewControllerCounterclockwiseWithAnimated:(BOOL)animated
@@ -606,7 +596,7 @@
         return;
     }
     
-    [(DPPrismViewController*)self.parentViewController rotateViewCounterclockwiseWithAnimated:animated];
+    [(DPPrismViewController*)self.parentViewController rotateCounterclockwiseWithAnimated:animated];
 }
 
 @end

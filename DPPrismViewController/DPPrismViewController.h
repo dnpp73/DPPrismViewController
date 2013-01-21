@@ -37,8 +37,8 @@
 @property (nonatomic, readonly) UIViewController* clockwiseViewController;
 @property (nonatomic, readonly) UIViewController* counterclockwiseViewController;
 
-- (void)rotateViewClockwiseWithAnimated:(BOOL)animated;
-- (void)rotateViewCounterclockwiseWithAnimated:(BOOL)animated;
+- (void)rotateClockwiseWithAnimated:(BOOL)animated;
+- (void)rotateCounterclockwiseWithAnimated:(BOOL)animated;
 
 @end
 

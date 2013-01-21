@@ -116,12 +116,12 @@ static NSArray* _mustFailActionButtons; // UIButtons
 
 - (void)debug_clockwise
 {
-    [self rotateViewClockwiseWithAnimated:YES];
+    [self rotateClockwiseWithAnimated:YES];
 }
 
 - (void)debug_counterclockwise
 {
-    [self rotateViewCounterclockwiseWithAnimated:YES];
+    [self rotateCounterclockwiseWithAnimated:YES];
 }
 
 - (void)debug_removeVisibleViewController
