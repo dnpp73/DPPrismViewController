@@ -66,6 +66,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.view.backgroundColor = [UIColor blackColor];
     [self showVisibleViewController];
     _delayRemoveViewControllerBlocks = [NSMutableArray array];
 }
@@ -425,6 +426,12 @@
     } else if (_visibleViewController == nil) {
         ShowConsole(@"_visibleViewController が nil なのでどうしようもない。");
         return;
+    } else if (_prismTransition.performTransitioning == YES) {
+        ShowConsole(@"_performTransitioning が YES で他の transition 最中だ。");
+        return;
+    } else if (_prismTransition.manualTransitioning == YES) {
+        ShowConsole(@"_manualTransitioning が YES で他の transition 最中だ。");
+        return;
     }
     
     // 実行の前準備
@@ -461,6 +468,12 @@
     } else if (_visibleViewController == nil) {
         ShowConsole(@"_visibleViewController が nil なのでどうしようもない。");
         return;
+    } else if (_prismTransition.performTransitioning == YES) {
+        ShowConsole(@"_performTransitioning が YES で他の transition 最中だ。");
+        return;
+    } else if (_prismTransition.manualTransitioning == YES) {
+        ShowConsole(@"_manualTransitioning が YES で他の transition 最中だ。");
+        return;
     }
     
     // 実行の前準備
@@ -475,7 +488,7 @@
             }
         }
     };
-    
+        
     // 実行
     [self performTransitionWithfrontView:frontViewController.view
                            rightSideView:nil
@@ -499,37 +512,47 @@
         return;
     }
     
+    UIView* destinationView = nil;
+    UIViewAnimationOptions option;
+    if (type == DPPrismTransitionTypeClockwise) {
+        destinationView = rightSideView;
+        option = UIViewAnimationOptionTransitionFlipFromRight;
+    } else if (type == DPPrismTransitionTypeCounterclockwise) {
+        destinationView = leftSideView;
+        option = UIViewAnimationOptionTransitionFlipFromLeft;
+    }
+    
     if (animated) {
-        _prismTransition = [[DPPrismTransition alloc] initWithDelegate:self
-                                                             frontView:frontView
-                                                         rightSideView:rightSideView
-                                                          leftSideView:leftSideView
-                                                                 sides:self.sides
-                                                                  type:type
-                                                            completion:^(BOOL finished){
-                                                                completion(finished);
-                                                                _prismTransition = nil;
-                                                            }];
-        
-        #ifdef DEMO_MODE
-        _prismTransition.duration *= 3;
-//        _prismTransition.useRenderViewMethod = YES;
-        #endif
-        
-        [_prismTransition performTransition];
+        if (_viewControllers.count != 2) {
+            _prismTransition = [[DPPrismTransition alloc] initWithDelegate:self
+                                                                 frontView:frontView
+                                                             rightSideView:rightSideView
+                                                              leftSideView:leftSideView
+                                                                     sides:self.sides
+                                                                      type:type
+                                                                completion:^(BOOL finished){
+                                                                    completion(finished);
+                                                                    _prismTransition = nil;
+                                                                }];
+            
+            #ifdef DEMO_MODE
+//            _prismTransition.useRenderViewMethod = YES;
+            #endif
+            
+            [_prismTransition performTransition];
+        }
+        else {
+            ShowConsole(@"_viewControllers が 2 つなのでデフォルトのを使う");
+            [UIView transitionFromView:frontView
+                                toView:destinationView
+                              duration:[DPPrismTransition defaultDuration]
+                               options:option
+                            completion:completion];
+
+        }
     }
     // DPPrismTransition の中でやってることは大体こんな感じなんだけど、うーん。
     else {
-        UIView* destinationView = nil;
-        
-        if (type == DPPrismTransitionTypeClockwise)
-            destinationView = rightSideView;
-        else if (type == DPPrismTransitionTypeCounterclockwise)
-            destinationView = leftSideView;
-        
-        if (destinationView == nil)
-            return;
-        
         [_rootView addSubview:destinationView];
         [frontView removeFromSuperview];
         completion(YES);

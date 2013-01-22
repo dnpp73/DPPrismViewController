@@ -12,7 +12,11 @@
 #import <QuartzCore/QuartzCore.h>
 #import "DPRenderViewHelper.h"
 
+#if DEMO_MODE
+static const NSTimeInterval defaultDuration = 1.8;
+#else
 static const NSTimeInterval defaultDuration = 0.6;
+#endif
 
 static NSString* const frontLayerKey     = @"frontLayer";
 static NSString* const rightSideLayerKey = @"rightSideLayer";
@@ -265,7 +269,7 @@ static CATransform3D CATransform3DMakePerspective(CGFloat z) {
         CAGradientLayer* (^makeShadowLayer)(CGPoint, CGPoint) = ^(CGPoint startPoint, CGPoint endPoint){
             CAGradientLayer* shadowLayer = [CAGradientLayer layer];
             shadowLayer.colors     = (@[
-                                      (id)[w_self.shadowColor colorWithAlphaComponent:0.3].CGColor,
+                                      (id)[w_self.shadowColor colorWithAlphaComponent:0.5].CGColor,
                                       (id)w_self.shadowColor.CGColor,
                                       ]);
             shadowLayer.startPoint = startPoint;
