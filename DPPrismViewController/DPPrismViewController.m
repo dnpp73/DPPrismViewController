@@ -106,7 +106,11 @@
     if (_prismTransition.performTransitioning == YES || _prismTransition.manualTransitioning == YES) {
         ShowConsole(@"transition 中なので終わったらデバイスの向きに従って回転させる。");
         _delayRotateScreenBlock = ^{
-            [UIViewController attemptRotationToDeviceOrientation];
+            int64_t delayInMilliSeconds = 100;
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInMilliSeconds * NSEC_PER_MSEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                [UIViewController attemptRotationToDeviceOrientation];
+            });
         };
         return NO;
     }
