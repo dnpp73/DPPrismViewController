@@ -15,6 +15,9 @@
 #import <UIKit/UIKit.h>
 
 
+typedef void (^DPPrismViewControllerCompletionBlock)(BOOL);
+
+
 @interface DPPrismViewController : UIViewController
 
 @property (nonatomic, copy)   NSOrderedSet* viewControllers; // これをセットすると childViewController とか色々よしなにしてくれる感じの setter
@@ -36,14 +39,24 @@
 @property (nonatomic, readonly) NSInteger indexOfCounterclockwiseViewController;
 @property (nonatomic, readonly) UIViewController* clockwiseViewController;
 @property (nonatomic, readonly) UIViewController* counterclockwiseViewController;
+- (UIViewController*)clockwiseViewControllerFromViewController:(UIViewController*)viewController;
+- (UIViewController*)counterclockwiseViewControllerFromViewController:(UIViewController*)viewController;
 
 - (void)rotateClockwiseWithAnimated:(BOOL)animated;
+- (void)rotateClockwiseWithAnimated:(BOOL)animated completion:(DPPrismViewControllerCompletionBlock)completion;
+
 - (void)rotateCounterclockwiseWithAnimated:(BOOL)animated;
+- (void)rotateCounterclockwiseWithAnimated:(BOOL)animated completion:(DPPrismViewControllerCompletionBlock)completion;
 
 @end
 
 
 @interface UIViewController (DPPrismViewControllerRotation)
+
 - (void)rotateViewControllerClockwiseWithAnimated:(BOOL)animated;
+- (void)rotateViewControllerClockwiseWithAnimated:(BOOL)animated completion:(DPPrismViewControllerCompletionBlock)completion;;
+
 - (void)rotateViewControllerCounterclockwiseWithAnimated:(BOOL)animated;
+- (void)rotateViewControllerCounterclockwiseWithAnimated:(BOOL)animated completion:(DPPrismViewControllerCompletionBlock)completion;;
+
 @end

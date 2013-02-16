@@ -234,14 +234,19 @@
     return _visibleViewController;
 }
 
-- (NSInteger)indexOfVisibleViewController
+- (NSInteger)indexOfViewController:(UIViewController*)viewController
 {
-    if ([_viewControllers containsObject:_visibleViewController] == NO) {
-        ShowConsole(@"_visibleViewController が _viewControllers の中に無かった。");
+    if ([_viewControllers containsObject:viewController] == NO) {
+        ShowConsole(@"指定された viewController が _viewControllers の中に無かった。");
         return -1;
     }
+    
+    return [_viewControllers indexOfObject:viewController];
+}
 
-    return [_viewControllers indexOfObject:_visibleViewController];
+- (NSInteger)indexOfVisibleViewController
+{
+    return [self indexOfViewController:_visibleViewController];
 }
 
 - (NSInteger)indexOfClockwiseViewController
@@ -257,17 +262,6 @@
     return index;
 }
 
-- (UIViewController*)clockwiseViewController
-{
-    NSInteger index = self.indexOfClockwiseViewController;
-    if (index < 0 && _viewControllers.count <= index) {
-        ShowConsole(@"_viewControllers に対して不正な index だ。");
-        return nil;
-    }
-    
-    return [_viewControllers objectAtIndex:index];
-}
-
 - (NSInteger)indexOfCounterclockwiseViewController
 {
     NSInteger index = self.indexOfVisibleViewController;
@@ -281,6 +275,17 @@
     return index;
 }
 
+- (UIViewController*)clockwiseViewController
+{
+    NSInteger index = self.indexOfClockwiseViewController;
+    if (index < 0 && _viewControllers.count <= index) {
+        ShowConsole(@"_viewControllers に対して不正な index だ。");
+        return nil;
+    }
+    
+    return [_viewControllers objectAtIndex:index];
+}
+
 - (UIViewController*)counterclockwiseViewController
 {
     NSInteger index = self.indexOfCounterclockwiseViewController;
@@ -289,6 +294,44 @@
         return nil;
     }
 
+    return [_viewControllers objectAtIndex:index];
+}
+
+- (UIViewController*)clockwiseViewControllerFromViewController:(UIViewController*)viewController
+{
+    NSInteger index = [self indexOfViewController:viewController];
+    if (index < 0) {
+        ShowConsole(@"[self indexOfViewController:viewController] がおかしい。引数の viewController が _viewControllers の中に無いのだと思う。");
+        return nil;
+    }
+    
+    index++;
+    if (index == _viewControllers.count) index = 0;
+    
+    if (index < 0 && _viewControllers.count <= index) {
+        ShowConsole(@"_viewControllers に対して不正な index だ。");
+        return nil;
+    }
+    
+    return [_viewControllers objectAtIndex:index];
+}
+
+- (UIViewController*)counterclockwiseViewControllerFromViewController:(UIViewController*)viewController
+{
+    NSInteger index = [self indexOfViewController:viewController];
+    if (index < 0) {
+        ShowConsole(@"[self indexOfViewController:viewController] がおかしい。引数の viewController が _viewControllers の中に無いのだと思う。");
+        return nil;
+    }
+    
+    index--;
+    if (index == -1) index = _viewControllers.count - 1;
+
+    if (index < 0 && _viewControllers.count <= index) {
+        ShowConsole(@"_viewControllers に対して不正な index だ。");
+        return nil;
+    }
+    
     return [_viewControllers objectAtIndex:index];
 }
 
@@ -420,6 +463,11 @@
 
 - (void)rotateClockwiseWithAnimated:(BOOL)animated
 {
+    [self rotateClockwiseWithAnimated:animated completion:nil];
+}
+
+- (void)rotateClockwiseWithAnimated:(BOOL)animated completion:(DPPrismViewControllerCompletionBlock)completion
+{
     // インスタンスの状態チェック
     if (_viewControllers.count == 0) {
         ShowConsole(@"_viewControllers が空だ。");
@@ -443,11 +491,14 @@
     UIViewController* rightSideViewController = self.clockwiseViewController;
     rightSideViewController.view.frame = frontViewController.view.frame = _rootView.frame = self.view.bounds;
     __weak DPPrismViewController* w_self = self;
-    void (^completion)(BOOL) = ^(BOOL finished){
+    void (^privateCompletion)(BOOL) = ^(BOOL finished){
         if (finished) {
             if ([w_self.viewControllers containsObject:rightSideViewController]) { // transition 中に viewControllers が変わったときのため…
                 _visibleViewController = rightSideViewController;
             }
+        }
+        if (completion) {
+            completion(finished);
         }
     };
     
@@ -457,10 +508,15 @@
                             leftSideView:nil
                                 animated:animated
                                     type:DPPrismTransitionTypeClockwise
-                              completion:completion];
+                              completion:privateCompletion];
 }
 
 - (void)rotateCounterclockwiseWithAnimated:(BOOL)animated
+{
+    [self rotateCounterclockwiseWithAnimated:animated completion:nil];
+}
+
+- (void)rotateCounterclockwiseWithAnimated:(BOOL)animated completion:(DPPrismViewControllerCompletionBlock)completion
 {
     // インスタンスの状態チェック
     if (_viewControllers.count == 0) {
@@ -485,11 +541,14 @@
     UIViewController* leftSideViewController  = self.counterclockwiseViewController;
     leftSideViewController.view.frame = frontViewController.view.frame = _rootView.frame = self.view.bounds;
     __weak DPPrismViewController* w_self = self;
-    void (^completion)(BOOL) = ^(BOOL finished){
+    void (^privateCompletion)(BOOL) = ^(BOOL finished){
         if (finished) {
             if ([w_self.viewControllers containsObject:leftSideViewController]) { // transition 中に viewControllers が変わったときのため…
                 _visibleViewController = leftSideViewController;
             }
+        }
+        if (completion) {
+            completion(finished);
         }
     };
         
@@ -499,7 +558,7 @@
                             leftSideView:leftSideViewController.view
                                 animated:animated
                                     type:DPPrismTransitionTypeCounterclockwise
-                              completion:completion];
+                              completion:privateCompletion];
 }
 
 #pragma mark - implementation (private)
@@ -603,18 +662,10 @@
 
 - (void)rotateViewControllerClockwiseWithAnimated:(BOOL)animated
 {
-    if ([self.parentViewController isKindOfClass:[DPPrismViewController class]] == NO) {
-        ShowConsole(@"parentViewController が DPPrismViewController ではない。");
-        return;
-    } else if ([(DPPrismViewController*)self.parentViewController visibleViewController] != self) {
-        ShowConsole(@"visibleViewController ではない。");
-        return;
-    }
-    
-    [(DPPrismViewController*)self.parentViewController rotateClockwiseWithAnimated:animated];
+    [self rotateViewControllerClockwiseWithAnimated:animated completion:nil];
 }
 
-- (void)rotateViewControllerCounterclockwiseWithAnimated:(BOOL)animated
+- (void)rotateViewControllerClockwiseWithAnimated:(BOOL)animated completion:(DPPrismViewControllerCompletionBlock)completion
 {
     if ([self.parentViewController isKindOfClass:[DPPrismViewController class]] == NO) {
         ShowConsole(@"parentViewController が DPPrismViewController ではない。");
@@ -624,7 +675,25 @@
         return;
     }
     
-    [(DPPrismViewController*)self.parentViewController rotateCounterclockwiseWithAnimated:animated];
+    [(DPPrismViewController*)self.parentViewController rotateClockwiseWithAnimated:animated completion:completion];
+}
+
+- (void)rotateViewControllerCounterclockwiseWithAnimated:(BOOL)animated
+{
+    [self rotateViewControllerCounterclockwiseWithAnimated:animated completion:nil];
+}
+
+- (void)rotateViewControllerCounterclockwiseWithAnimated:(BOOL)animated completion:(DPPrismViewControllerCompletionBlock)completion
+{
+    if ([self.parentViewController isKindOfClass:[DPPrismViewController class]] == NO) {
+        ShowConsole(@"parentViewController が DPPrismViewController ではない。");
+        return;
+    } else if ([(DPPrismViewController*)self.parentViewController visibleViewController] != self) {
+        ShowConsole(@"visibleViewController ではない。");
+        return;
+    }
+    
+    [(DPPrismViewController*)self.parentViewController rotateCounterclockwiseWithAnimated:animated completion:completion];
 }
 
 @end
