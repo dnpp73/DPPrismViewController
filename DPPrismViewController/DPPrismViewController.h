@@ -53,6 +53,9 @@ typedef void (^DPPrismViewControllerCompletionBlock)(BOOL);
 
 @interface UIViewController (DPPrismViewControllerRotation)
 
+@property (nonatomic, readonly) UIViewController* clockwiseViewController;
+@property (nonatomic, readonly) UIViewController* counterclockwiseViewController;
+
 - (void)rotateViewControllerClockwiseWithAnimated:(BOOL)animated;
 - (void)rotateViewControllerClockwiseWithAnimated:(BOOL)animated completion:(DPPrismViewControllerCompletionBlock)completion;;
 

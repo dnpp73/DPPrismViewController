@@ -660,6 +660,26 @@
 
 @implementation UIViewController (DPPrismViewControllerRotation)
 
+- (UIViewController*)clockwiseViewController
+{
+    if ([self.parentViewController isKindOfClass:[DPPrismViewController class]] == NO) {
+        ShowConsole(@"parentViewController が DPPrismViewController ではない。");
+        return nil;
+    }
+    
+    return [(DPPrismViewController*)self.parentViewController clockwiseViewControllerFromViewController:self];
+}
+
+- (UIViewController*)counterclockwiseViewController
+{
+    if ([self.parentViewController isKindOfClass:[DPPrismViewController class]] == NO) {
+        ShowConsole(@"parentViewController が DPPrismViewController ではない。");
+        return nil;
+    }
+    
+    return [(DPPrismViewController*)self.parentViewController counterclockwiseViewControllerFromViewController:self];
+}
+
 - (void)rotateViewControllerClockwiseWithAnimated:(BOOL)animated
 {
     [self rotateViewControllerClockwiseWithAnimated:animated completion:nil];
