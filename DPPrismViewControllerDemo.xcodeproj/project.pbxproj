@@ -18,7 +18,6 @@
 		190FB5EA167E072C00221202 /* NSDate+utilsForJpTimezone.m in Sources */ = {isa = PBXBuildFile; fileRef = 190FB5B1167E072C00221202 /* NSDate+utilsForJpTimezone.m */; };
 		190FB5EB167E072C00221202 /* NSDictionary+hasKey.m in Sources */ = {isa = PBXBuildFile; fileRef = 190FB5B3167E072C00221202 /* NSDictionary+hasKey.m */; };
 		190FB5EC167E072C00221202 /* NSDictionary+removeEmptyAndNullObjects.m in Sources */ = {isa = PBXBuildFile; fileRef = 190FB5B5167E072C00221202 /* NSDictionary+removeEmptyAndNullObjects.m */; };
-		190FB5ED167E072C00221202 /* NSString+isEmpty.m in Sources */ = {isa = PBXBuildFile; fileRef = 190FB5B7167E072C00221202 /* NSString+isEmpty.m */; };
 		190FB5EE167E072C00221202 /* NSString+isMatchRegExp.m in Sources */ = {isa = PBXBuildFile; fileRef = 190FB5B9167E072C00221202 /* NSString+isMatchRegExp.m */; };
 		190FB5EF167E072C00221202 /* NSString+MD5String.m in Sources */ = {isa = PBXBuildFile; fileRef = 190FB5BB167E072C00221202 /* NSString+MD5String.m */; };
 		190FB5F0167E072C00221202 /* UINavigationBar+JTDropShadow.m in Sources */ = {isa = PBXBuildFile; fileRef = 190FB5BD167E072C00221202 /* UINavigationBar+JTDropShadow.m */; };
@@ -50,6 +49,7 @@
 		191000E0169D5F4D00E2BAF0 /* DPRenderViewHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 191000DF169D5F4D00E2BAF0 /* DPRenderViewHelper.m */; };
 		194BC4FC1698521F00C7E228 /* DPPrismTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 194BC4FB1698521F00C7E228 /* DPPrismTransition.m */; };
 		194E07E4169FE75B00E1DD74 /* DPPrismViewController+debug_hitTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 194E07E3169FE75B00E1DD74 /* DPPrismViewController+debug_hitTest.m */; };
+		19845A4A16E60DC100C3C89B /* DPSwizzleMethodUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 19845A4916E60DC100C3C89B /* DPSwizzleMethodUtil.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,8 +72,6 @@
 		190FB5B3167E072C00221202 /* NSDictionary+hasKey.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = "NSDictionary+hasKey.m"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		190FB5B4167E072C00221202 /* NSDictionary+removeEmptyAndNullObjects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = "NSDictionary+removeEmptyAndNullObjects.h"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		190FB5B5167E072C00221202 /* NSDictionary+removeEmptyAndNullObjects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = "NSDictionary+removeEmptyAndNullObjects.m"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		190FB5B6167E072C00221202 /* NSString+isEmpty.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = "NSString+isEmpty.h"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
-		190FB5B7167E072C00221202 /* NSString+isEmpty.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = "NSString+isEmpty.m"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		190FB5B8167E072C00221202 /* NSString+isMatchRegExp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = "NSString+isMatchRegExp.h"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		190FB5B9167E072C00221202 /* NSString+isMatchRegExp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = "NSString+isMatchRegExp.m"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		190FB5BA167E072C00221202 /* NSString+MD5String.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = "NSString+MD5String.h"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -136,6 +134,8 @@
 		194BC4FB1698521F00C7E228 /* DPPrismTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DPPrismTransition.m; path = DPPrismViewController/DPPrismTransition.m; sourceTree = SOURCE_ROOT; };
 		194E07E2169FE75B00E1DD74 /* DPPrismViewController+debug_hitTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "DPPrismViewController+debug_hitTest.h"; path = "DPPrismViewController/debug/DPPrismViewController+debug_hitTest.h"; sourceTree = SOURCE_ROOT; };
 		194E07E3169FE75B00E1DD74 /* DPPrismViewController+debug_hitTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "DPPrismViewController+debug_hitTest.m"; path = "DPPrismViewController/debug/DPPrismViewController+debug_hitTest.m"; sourceTree = SOURCE_ROOT; };
+		19845A4816E60DC100C3C89B /* DPSwizzleMethodUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DPSwizzleMethodUtil.h; sourceTree = "<group>"; };
+		19845A4916E60DC100C3C89B /* DPSwizzleMethodUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DPSwizzleMethodUtil.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -220,6 +220,7 @@
 				190FB5A8167E072C00221202 /* Categories */,
 				190FB5CE167E072C00221202 /* Classes */,
 				190FB5E3167E072C00221202 /* Macros */,
+				19845A4716E60DC100C3C89B /* Utils */,
 				190FB5E2167E072C00221202 /* DPSmallUtils.h */,
 			);
 			path = DPSmallUtils;
@@ -238,8 +239,6 @@
 				190FB5B3167E072C00221202 /* NSDictionary+hasKey.m */,
 				190FB5B4167E072C00221202 /* NSDictionary+removeEmptyAndNullObjects.h */,
 				190FB5B5167E072C00221202 /* NSDictionary+removeEmptyAndNullObjects.m */,
-				190FB5B6167E072C00221202 /* NSString+isEmpty.h */,
-				190FB5B7167E072C00221202 /* NSString+isEmpty.m */,
 				190FB5B8167E072C00221202 /* NSString+isMatchRegExp.h */,
 				190FB5B9167E072C00221202 /* NSString+isMatchRegExp.m */,
 				190FB5BA167E072C00221202 /* NSString+MD5String.h */,
@@ -347,6 +346,15 @@
 			name = debug;
 			sourceTree = "<group>";
 		};
+		19845A4716E60DC100C3C89B /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				19845A4816E60DC100C3C89B /* DPSwizzleMethodUtil.h */,
+				19845A4916E60DC100C3C89B /* DPSwizzleMethodUtil.m */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -420,7 +428,6 @@
 				190FB5EA167E072C00221202 /* NSDate+utilsForJpTimezone.m in Sources */,
 				190FB5EB167E072C00221202 /* NSDictionary+hasKey.m in Sources */,
 				190FB5EC167E072C00221202 /* NSDictionary+removeEmptyAndNullObjects.m in Sources */,
-				190FB5ED167E072C00221202 /* NSString+isEmpty.m in Sources */,
 				190FB5EE167E072C00221202 /* NSString+isMatchRegExp.m in Sources */,
 				190FB5EF167E072C00221202 /* NSString+MD5String.m in Sources */,
 				190FB5F0167E072C00221202 /* UINavigationBar+JTDropShadow.m in Sources */,
@@ -448,6 +455,7 @@
 				194BC4FC1698521F00C7E228 /* DPPrismTransition.m in Sources */,
 				191000E0169D5F4D00E2BAF0 /* DPRenderViewHelper.m in Sources */,
 				194E07E4169FE75B00E1DD74 /* DPPrismViewController+debug_hitTest.m in Sources */,
+				19845A4A16E60DC100C3C89B /* DPSwizzleMethodUtil.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
