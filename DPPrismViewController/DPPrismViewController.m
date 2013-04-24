@@ -117,15 +117,47 @@
     
     BOOL shouldAutorotate = YES;
     if (self.onlyCheckVisibleViewControllerRotation == NO) {
-        for (UIViewController* viewController in _viewControllers) { // ToDo : iOS 5 のこと考えてない。とりあえず落ちないようにしただけ
-            if ([viewController respondsToSelector:@selector(shouldAutorotate)] && [viewController shouldAutorotate] == NO) {
+        // 涙の iOS 5 対応
+        if ([[[UIDevice currentDevice] systemVersion] hasPrefix:@"5"]) {
+            BOOL allViewControllersRespondsToShouldAutorotate = YES;
+            for (id vc in _viewControllers) allViewControllersRespondsToShouldAutorotate &= [vc respondsToSelector:@selector(shouldAutorotate)];
+            // もし独自に実装されてるならそれを信頼する
+            if (allViewControllersRespondsToShouldAutorotate) {
+                for (UIViewController* viewController in _viewControllers) {
+                    if ([viewController respondsToSelector:@selector(shouldAutorotate)] && [viewController shouldAutorotate] == NO) {
+                        shouldAutorotate = NO;
+                        break;
+                    }
+                }
+            }
+            // iOS 5 ならもう回転させなくていいのではないか…という気持ちもなくもないけど、最悪落ちるってことが無いように…
+            else {
                 shouldAutorotate = NO;
-                break;
+            }
+        }
+        // iOS 6 以降なら呼ばれるので直で書いていい
+        else {
+            for (UIViewController* viewController in _viewControllers) {
+                if ([viewController respondsToSelector:@selector(shouldAutorotate)] && [viewController shouldAutorotate] == NO) {
+                    shouldAutorotate = NO;
+                    break;
+                }
             }
         }
     }
     else {
-        if ([_visibleViewController respondsToSelector:@selector(shouldAutorotate)]) {
+        if ([[[UIDevice currentDevice] systemVersion] hasPrefix:@"5"]) {
+            // もし独自に実装されてるならそれを信頼する
+            if ([_visibleViewController respondsToSelector:@selector(shouldAutorotate)]) {
+                shouldAutorotate = [_visibleViewController shouldAutorotate];
+            }
+            // iOS 5 ならもう回転させなくていいのではないか…という気持ちもなくもないけど、最悪落ちるってことが無いように…
+            else {
+                shouldAutorotate = NO;
+            }
+        }
+        // iOS 6 以降なら呼ばれるので直で書いていい
+        else {
             shouldAutorotate = [_visibleViewController shouldAutorotate];
         }
     }
